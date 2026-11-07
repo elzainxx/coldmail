@@ -1,0 +1,16 @@
+[submodule "coldmail-verify"]
+	path = coldmail-verify
+	url = https://github.com/elzainxx/coldmail-verify.git
+	branch = main
+[submodule "coldmail-send-managed"]
+	path = coldmail-send-managed
+	url = https://github.com/elzainxx/coldmail-send-managed.git
+	branch = main
+[submodule "coldmail-send-byo"]
+	path = coldmail-send-byo
+	url = https://github.com/elzainxx/coldmail-send-byo.git
+	branch = main
+[submodule "coldmail-platform"]
+	path = coldmail-platform
+	url = https://github.com/elzainxx/coldmail-platform.git
+	branch = main
