@@ -18,7 +18,7 @@ COPY --from=docker:27-cli /usr/local/libexec/docker/cli-plugins/docker-compose /
 # toolchains the workflows expect on the runner
 COPY --from=golang:1.26 /usr/local/go /usr/local/go
 COPY --from=node:20-bookworm-slim /usr/local/bin/node /usr/local/bin/node
-COPY --from=mikefarah/yq:latest /usr/bin/yq /usr/local/bin/yq
+COPY --from=mikefarah/yq:v4.54.2@sha256:5d56494617dce8311106e905aac5c080a2087c905a7f7de2984db2e2cc60ab2e /usr/bin/yq /usr/local/bin/yq
 ENV PATH=/usr/local/go/bin:/usr/local/bin:$PATH
 # the same unprivileged user GitHub's runner uses (uid 1001) — this is what makes ownership bugs reproduce
 RUN useradd -m -u 1001 -s /bin/bash runner && echo 'runner ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/runner

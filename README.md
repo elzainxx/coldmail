@@ -26,9 +26,15 @@ State of the pins as of **2026-11-08** (the maintained record, with every run UR
 
 | module | GitHub Actions |
 |---|---|
-| `coldmail-verify` | green |
-| `coldmail-send-managed` | green (two consecutive runs) |
-| `coldmail-send-byo` | **red on one test** — `TestEvaluate_T5…`, a real property of the From-gate's DNS handling under a resolver search domain; recorded as `M3-CI-OD-1` in that repo's `Docs/open-decisions.md`, awaiting a ruling. **Also intermittent and unexplained:** one run in three (of identical code) additionally failed the `Phase 3 dispatch` package with every test passing; see `verification-runs.md`. It is pinned because it is the head and carries every other fix, not because it is green. |
+| `coldmail-verify` | **green** — `82644ae`, 9 of 9 jobs |
+| `coldmail-send-managed` | **green** — `51e081d`, harness 62/0 |
+| `coldmail-send-byo` | **green** — `9aad2db`, harness 100/0 (its earlier red, `TestEvaluate_T5…`, was a real defect in the From-gate's DNS handling under a resolver search domain: ruled as `M3-CI-OD-1` and fixed, not loosened) |
+
+All three heads are green GitHub Actions runs, so no pin is a disclosed exception. **Still open** (each recorded, none hidden):
+module 1 reports a domain with an A record and no MX as `invalid / no_mx` (needs a ruling); Ruby 3.2 is past end-of-life (the
+3.3/3.4 move is a separate decision); one unexplained, non-recurring red in module 3's `Phase 3 dispatch` package (not chased; if
+it recurs, check the `go_suite` SIGPIPE race first). Both senders also have an on-demand `outage-drill` workflow (the whole
+harness in the default non-RAM mode, then a real `docker stop postgres`): 22/22 each on a runner.
 
 ## Cloning
 
@@ -72,9 +78,11 @@ Notes that apply to the two sender modules:
 - `scripts/dev.sh` uses a durable Postgres by default. Set `DEV_RAM_PG=1` for the RAM-backed, `fsync=off`
   Postgres that CI uses — but never on a stack you intend to `docker stop`, because that loses the
   database (module 3, issue #131).
-- Module 2's `dev.sh` has the same opt-in now (ported 2026-11-08). Two things about that port are **not yet verified**: the
-  full harness in the default (non-RAM) mode, and a real `docker stop postgres` survival drill; see
-  `coldmail-send-managed/Docs/future-work.md`.
+- Module 2's `dev.sh` has the same opt-in now (ported 2026-11-08) and it is verified on a runner: the whole harness in the default
+  (non-RAM) mode passes, and so does a real `docker stop postgres` drill (`gh workflow run outage-drill.yml -R
+  elzainxx/coldmail-send-managed`; the same workflow exists in module 3). See `coldmail-send-managed/Docs/future-work.md`.
+- No compose file, Dockerfile or workflow uses `:latest`: Mailpit, CoreDNS and the DNS black-hole fixture are pinned by digest, and
+  an `image_pins` gate keeps it so. The verifier-node image installs a committed `Gemfile.lock` frozen.
 - `scripts/dev.sh certs` hands each dev key to the uid of the container that reads it (`tools/own-secrets.sh`), keeping mode
   600. Never "fix" a permission error there with `chmod`; a CI step fails if the keys are loosened.
 - If `go` is run on a host where antivirus quarantines freshly built binaries, run it in a container.
@@ -106,9 +114,9 @@ git add coldmail-send-byo
 git commit -m "Pin coldmail-send-byo at <sha> (<why>)"
 ```
 
-Only pin commits whose **GitHub Actions run** is green. If a red is a recorded open decision, say so in the pin's commit
-message and in the table above — the one current instance is `coldmail-send-byo` (`M3-CI-OD-1`). The record of what was
-run, at which commit, lives in `coldmail-platform/verification-runs.md`.
+Only pin commits whose **GitHub Actions run** is green. If a pin ever has to be a red one because the red is a recorded open
+decision, say so in the pin's commit message and in the table above (the previous pin of `coldmail-send-byo` was exactly that, for
+`M3-CI-OD-1`, until it was fixed). The record of what was run, at which commit, lives in `coldmail-platform/verification-runs.md`.
 
 ## Where to start reading
 
