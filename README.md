@@ -1,7 +1,9 @@
 # coldmail
 
-The parent repository for the coldmail platform. It contains **no code of its own**: it pins four
-independent repositories, as git submodules, at the commits that were verified together.
+The parent repository for the coldmail platform. It contains **no product code of its own**: it pins four
+independent repositories, as git submodules, at the commits recorded in
+[`coldmail-platform/verification-runs.md`](https://github.com/elzainxx/coldmail-platform/blob/main/verification-runs.md).
+Its only other content is `tools/ci-replica.sh`, a local rehearsal aid described below.
 
 | path | repository | what it is |
 |---|---|---|
@@ -11,6 +13,22 @@ independent repositories, as git submodules, at the commits that were verified t
 | `coldmail-platform` | [`elzainxx/coldmail-platform`](https://github.com/elzainxx/coldmail-platform) | **Documentation only** — the canonical module contract, the cross-module audit, the list of what was deferred and why, and the record of what was actually verified. |
 
 All five repositories are private.
+
+## What "green" means here
+
+**Green means a GitHub Actions run, on a real runner, of the pinned commit.** A run on a developer's machine does not
+count: until 2026-11-08 "green" here had only ever meant a Docker Desktop run on Windows, and the first real-runner runs
+of those same commits were red in all three code repositories (false-green class 20 in
+[`coldmail-platform/deferrals-and-false-greens.md`](https://github.com/elzainxx/coldmail-platform/blob/main/deferrals-and-false-greens.md)).
+
+State of the pins as of **2026-11-08** (the maintained record, with every run URL, is `coldmail-platform/verification-runs.md`
+— if this table and that file ever disagree, that file wins):
+
+| module | GitHub Actions |
+|---|---|
+| `coldmail-verify` | green |
+| `coldmail-send-managed` | green |
+| `coldmail-send-byo` | **red on one test** — `TestEvaluate_T5…`, a real property of the From-gate's DNS handling under a resolver search domain; recorded as `M3-CI-OD-1` in that repo's `Docs/open-decisions.md`, awaiting a ruling. It is pinned because it is the head and carries every other fix, not because it is green. |
 
 ## Cloning
 
@@ -54,8 +72,29 @@ Notes that apply to the two sender modules:
 - `scripts/dev.sh` uses a durable Postgres by default. Set `DEV_RAM_PG=1` for the RAM-backed, `fsync=off`
   Postgres that CI uses — but never on a stack you intend to `docker stop`, because that loses the
   database (module 3, issue #131).
-- Module 2's `dev.sh` has **not** had that change; see `coldmail-send-managed/Docs/future-work.md`.
+- Module 2's `dev.sh` has the same opt-in now (ported 2026-11-08). Two things about that port are **not yet verified**: the
+  full harness in the default (non-RAM) mode, and a real `docker stop postgres` survival drill; see
+  `coldmail-send-managed/Docs/future-work.md`.
+- `scripts/dev.sh certs` hands each dev key to the uid of the container that reads it (`tools/own-secrets.sh`), keeping mode
+  600. Never "fix" a permission error there with `chmod`; a CI step fails if the keys are loosened.
 - If `go` is run on a host where antivirus quarantines freshly built binaries, run it in a container.
+
+## Rehearsing CI on Linux (rehearsal only)
+
+`tools/ci-replica.sh` runs a repo's GitHub Actions job locally on Docker Desktop's own Linux filesystem, as an unprivileged
+uid, with `bash -e` step semantics — so permission enforcement and shell behaviour match a runner far better than a
+bind-mounted Windows run does:
+
+```bash
+tools/ci-replica.sh coldmail-send-byo .github/workflows/real-infra.yml behavioral
+tools/ci-replica.sh coldmail-verify   .github/workflows/ci.yml door5-gem-unmodified
+```
+
+It is **not** a substitute for CI. It does not run `uses:` steps or `services:` containers, and it found five of the eight
+masked failures behind class 20 and then **passed both sender modules that failed on the real runner**. Use it to iterate in
+minutes; cite only the GitHub Actions run. It needs about 5 GB of the Docker VM, so run one job at a time. Note that host
+tools under Git Bash (`sed`, `awk`, `grep` on a file) strip `\r`; inspect line endings with `tr -cd '\r' < file | wc -c`
+or `cat -A` inside a Linux container.
 
 ## Updating the pins
 
@@ -67,8 +106,9 @@ git add coldmail-send-byo
 git commit -m "Pin coldmail-send-byo at <sha> (<why>)"
 ```
 
-Only pin commits whose suite and gates were green. The record of what was run, at which commit,
-lives in `coldmail-platform/verification-runs.md`.
+Only pin commits whose **GitHub Actions run** is green. If a red is a recorded open decision, say so in the pin's commit
+message and in the table above — the one current instance is `coldmail-send-byo` (`M3-CI-OD-1`). The record of what was
+run, at which commit, lives in `coldmail-platform/verification-runs.md`.
 
 ## Where to start reading
 
