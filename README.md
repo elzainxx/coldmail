@@ -27,8 +27,8 @@ State of the pins as of **2026-11-08** (the maintained record, with every run UR
 | module | GitHub Actions |
 |---|---|
 | `coldmail-verify` | green |
-| `coldmail-send-managed` | green |
-| `coldmail-send-byo` | **red on one test** — `TestEvaluate_T5…`, a real property of the From-gate's DNS handling under a resolver search domain; recorded as `M3-CI-OD-1` in that repo's `Docs/open-decisions.md`, awaiting a ruling. It is pinned because it is the head and carries every other fix, not because it is green. |
+| `coldmail-send-managed` | green (two consecutive runs) |
+| `coldmail-send-byo` | **red on one test** — `TestEvaluate_T5…`, a real property of the From-gate's DNS handling under a resolver search domain; recorded as `M3-CI-OD-1` in that repo's `Docs/open-decisions.md`, awaiting a ruling. **Also intermittent and unexplained:** one run in three (of identical code) additionally failed the `Phase 3 dispatch` package with every test passing; see `verification-runs.md`. It is pinned because it is the head and carries every other fix, not because it is green. |
 
 ## Cloning
 
