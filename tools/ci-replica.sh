@@ -13,7 +13,7 @@ if [ "${4:-}" = "--rebuild" ] || ! docker image inspect $IMG >/dev/null 2>&1; th
 fi
 LINUXFS=/var/lib/cm-linux   # a path on the docker-desktop VM's real ext4 disk (NOT /tmp: that is a noexec tmpfs, NOT a Windows host path)
 # create it world-writable-with-sticky-bit as root once (the runner user is uid 1001)
-MSYS_NO_PATHCONV=1 docker run --rm -v $LINUXFS:/x alpine:3 sh -c 'chmod 1777 /x' >/dev/null
+MSYS_NO_PATHCONV=1 docker run --rm -v $LINUXFS:/x alpine:3@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf sh -c 'chmod 1777 /x' >/dev/null
 MSYS_NO_PATHCONV=1 docker run --rm --network host --user 1001:1001 --group-add 0 \
   --memory 5g --memory-swap 5g -e GOMEMLIMIT=3GiB -e GOMAXPROCS=3 \
   -v /var/run/docker.sock:/var/run/docker.sock \

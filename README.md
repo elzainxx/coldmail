@@ -21,20 +21,23 @@ count: until 2026-11-08 "green" here had only ever meant a Docker Desktop run on
 of those same commits were red in all three code repositories (false-green class 20 in
 [`coldmail-platform/deferrals-and-false-greens.md`](https://github.com/elzainxx/coldmail-platform/blob/main/deferrals-and-false-greens.md)).
 
-State of the pins as of **2026-11-08** (the maintained record, with every run URL, is `coldmail-platform/verification-runs.md`
+State of the pins as of **2026-11-09** (the maintained record, with every run URL, is `coldmail-platform/verification-runs.md`
 — if this table and that file ever disagree, that file wins):
 
 | module | GitHub Actions |
 |---|---|
-| `coldmail-verify` | **green** — `82644ae`, 9 of 9 jobs |
-| `coldmail-send-managed` | **green** — `51e081d`, harness 62/0 |
-| `coldmail-send-byo` | **green** — `9aad2db`, harness 100/0 (its earlier red, `TestEvaluate_T5…`, was a real defect in the From-gate's DNS handling under a resolver search domain: ruled as `M3-CI-OD-1` and fixed, not loosened) |
+| `coldmail-verify` | **green** — `848fc7e`, 10 of 10 jobs |
+| `coldmail-send-managed` | **green** — `15a6b90`, harness 62/0 |
+| `coldmail-send-byo` | **green** — `36bc7ed`, harness 100/0 |
 
-All three heads are green GitHub Actions runs, so no pin is a disclosed exception. **Still open** (each recorded, none hidden):
-module 1 reports a domain with an A record and no MX as `invalid / no_mx` (needs a ruling); Ruby 3.2 is past end-of-life (the
-3.3/3.4 move is a separate decision); one unexplained, non-recurring red in module 3's `Phase 3 dispatch` package (not chased; if
-it recurs, check the `go_suite` SIGPIPE race first). Both senders also have an on-demand `outage-drill` workflow (the whole
-harness in the default non-RAM mode, then a real `docker stop postgres`): 22/22 each on a runner.
+All three heads are green GitHub Actions runs, so no pin is a disclosed exception. Since the last pin: module 1 treats a domain with an A/AAAA
+record and no MX as receiving mail (RFC 5321 §5.1, ADR-0020 — it used to be `invalid / no_mx`), and its verifier node's host audit goes red
+(so it does no SMTP) for a search/domain line, `ndots` > 1 or a dotted hostname; module 3's From-gate reads `a/24`-style SPF lengths as lengths;
+**every image is pinned by digest** and a gate rejects any that is not. **Still open** (each recorded, none hidden): Ruby 3.2 is past end-of-life
+(the 3.3/3.4 move is tied to module 1's go-live); the SMTP probe's destination is unfiltered; macro-bearing SPF targets are looked up literally
+(M3-CI-OD-3, awaiting a ruling); `node:20` / `alpine:3.20` support status was not verified; one unexplained, non-recurring red in module 3's
+`Phase 3 dispatch` package (not chased; if it recurs, check the `go_suite` SIGPIPE race first). Both senders also have an on-demand
+`outage-drill` workflow (the whole harness in the default non-RAM mode, then a real `docker stop postgres`): 22/22 each on a runner.
 
 ## Cloning
 
@@ -81,8 +84,8 @@ Notes that apply to the two sender modules:
 - Module 2's `dev.sh` has the same opt-in now (ported 2026-11-08) and it is verified on a runner: the whole harness in the default
   (non-RAM) mode passes, and so does a real `docker stop postgres` drill (`gh workflow run outage-drill.yml -R
   elzainxx/coldmail-send-managed`; the same workflow exists in module 3). See `coldmail-send-managed/Docs/future-work.md`.
-- No compose file, Dockerfile or workflow uses `:latest`: Mailpit, CoreDNS and the DNS black-hole fixture are pinned by digest, and
-  an `image_pins` gate keeps it so. The verifier-node image installs a committed `Gemfile.lock` frozen.
+- No image is pulled by tag alone: every compose file, Dockerfile, workflow service and tool image (builders included) is pinned by digest, and
+  an `image_pins` gate rejects any that is not. The verifier-node image installs a committed `Gemfile.lock` frozen.
 - `scripts/dev.sh certs` hands each dev key to the uid of the container that reads it (`tools/own-secrets.sh`), keeping mode
   600. Never "fix" a permission error there with `chmod`; a CI step fails if the keys are loosened.
 - If `go` is run on a host where antivirus quarantines freshly built binaries, run it in a container.
