@@ -146,6 +146,6 @@ M3 has no parked decisions of this kind (its 113 ledger ids are all ruled or clo
 
 - **Node 24 is the pinned LTS runtime; Node 26 now exists.** Moving is a deliberate bump (re-resolve the digest, run the box suite), not an emergency.
 - **M3's campaign-expiry evidence (Stage 10.4/10.6) is not determined** — the original evidence is in none of the four repositories. `campaign_expiry_mode` ships at `shadow`, so campaign expiry does not enforce until you decide (§4, M3 §6).
-- **Two deferred engineering items were registered during the close:** FW-M3-20 (an FK from `jobs.campaign_id` to `campaigns`) and FW-M3-21 (the user-copy ledger gate that M3-P8-OD-3 ruled but nobody built). They are in M3's `Docs/future-work.md`.
+- **Three deferred engineering items were registered during the close:** FW-M3-20 (an FK from `jobs.campaign_id` to `campaigns`), FW-M3-21 (the user-copy ledger gate that M3-P8-OD-3 ruled but nobody built) and FW-M3-22 (a concurrency test whose proof-of-overlap assertion failed once on a runner, then passed on a re-run of the same commit). They are in M3's `Docs/future-work.md`; none needs a decision from you.
 - **Ports in the dev stack:** M3 Mailpit on host `9025`, M3 Control on `9080` (a +1000 offset from M2 so both run side by side).
 - **M1 migration 0010** had one comment line edited (a doc path) in the unification; migrations are not checksum-tracked in M1 (FW-3), and nothing about the schema changed.
