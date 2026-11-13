@@ -105,8 +105,20 @@ Archive **github.com/zexSites/codmailling-module-3** (Settings → General → *
 
 - **Raise WSL memory.** `C:\Users\Zain\.wslconfig` currently has `memory=8GB`; the heavy gates (Postgres + Go build + Ruby image together) were reaped on this host. Suggested: `memory=10GB`,
   then `wsl --shutdown` and restart Docker Desktop. The CI gates run on GitHub's runners, so this only speeds local rehearsal.
-- **Docker stopped working on 2026-11-13 after a power loss** (`HCS_E_HYPERV_NOT_INSTALLED`; `systeminfo` said *Virtualization Enabled In Firmware: No*). If it is not already fixed: BIOS → enable
-  Intel Virtualization Technology (VT-x). If it resets again after a power loss, replace the CMOS battery (CR2032).
+- **Docker has not started since 2026-11-12 19:29** (Docker Desktop: "distro installation failed" = `HCS_E_HYPERV_NOT_INSTALLED`). The Windows hypervisor log says *"Hypervisor launch failed; Either VMX not
+  present or not enabled in BIOS"* on every boot since then, and `systeminfo` says *Virtualization Enabled In Firmware: No* — the machine's firmware stopped exposing Intel VT-x (an ASUS board, i5-11400F; it began with a
+  7-second reboot after an unclean shutdown, and the BIOS clock was not reset, so it is probably not the CMOS battery). **You told me you could not get into the BIOS.** Until that is fixed no Docker, WSL2 or
+  local container work is possible (CI is unaffected). Try: Del or F2 held from power-on (or Windows → Settings → System → Recovery → Advanced startup → UEFI Firmware Settings), then Advanced → CPU Configuration →
+  Intel (VMX) Virtualization Technology → Enabled → F10. After the fix `systeminfo | findstr /i Virtualization` must say *Yes*; then restart Docker Desktop. If the board keeps dropping its settings, suspect the PSU or
+  RAM (XMP) stability. This session's secret scans ran with a checksum-verified native `gitleaks` for that reason (recorded in the platform's `verification-runs.md`, fifth pass).
+- **Docker leftovers from this project, not removed because Docker could not start** (say "Docker is back" and I will do it, or run it yourself). Look first with `docker images` and `docker volume ls`;
+  these are the ones this project created:
+  - images (tags): `cm-audit-m1-node:run`, `tm-r34:ci`, `tmvn-p2-test*`, `tm-diag`, `tm-diag3`, `zricethezav/gitleaks:latest`;
+  - twelve dangling images proven to be truemail builds (they contain the truemail gem): `9a2f55b9dcf2 3002b09fdda1 49ccab0caab3 b0fc9a9dcd39 fa28128f200c 67009fe75006 f6260b96bd9e ba4c1d556362 fda1cf630bc8 73e7089e9939 f15ceaf17781 80da478a7c71`;
+  - volumes `cm-gocache cm-gomod cm-gopath sendbyo-gocache sendbyo-gomod`, and the seven anonymous Postgres-16 data volumes created 2026-11-07 → 2026-11-09 (check `docker volume inspect` for `CreatedAt`).
+
+  **Keep** `coldmail-gomod`, `coldmail-gocache`, `coldmail-gobin` (`coldmail/tools/` uses them) and everything belonging to your other projects. Nine further dangling images I could not attribute to this project
+  (`4e6e670bb069 a13c0b8bb0a9 11a1f0b604b1 26730869004e 0178a641fbb4 900f9c109f7a 5276a2323564 b868afa176bf b004b9c35c68`, one of them 2.6 GB) are yours to judge.
 - **Free space on `C:`** was 3.3 GB on 2026-11-13. Docker's disk lives on `D:` (`D:\Applications\DockerWSL`), but Windows itself, and WSL's default swap and temp files, are on `C:`; keep several GB free.
 
 ## 7. Decisions that need you and have no recorded recommendation
