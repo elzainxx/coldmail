@@ -93,9 +93,9 @@ Across repositories: **[`OWNER-ACTIONS.md`](OWNER-ACTIONS.md)** (this repo) is t
 
 ## Rules that hold across all four repositories
 
-- **Green means the GitHub runner.** Every fix is proved by a control that goes red without it.
+- **Green means the GitHub runner.** Every fix is proved by a control that goes red without it. A local Docker is not required and not trusted: every test, gate and secret scan runs on the runner.
 - **Every container image is pinned by digest** (`image@sha256:…`), and a gate in each repository rejects any that is not.
 - **Line endings are LF everywhere**, enforced by each repository's `.gitattributes` (a `git clone -c core.autocrlf=…` only configures the top level).
-- **No secret is ever committed.** Scan the full history (`gitleaks detect --log-opts="--all"`) before every push.
+- **No secret is ever committed.** Scan the full history (`gitleaks detect --log-opts="--all"`) before every push; every repository, this one included, also runs `gitleaks.yml` on the runner after every push (a pinned, checksum-verified gitleaks that proves itself on each run before it scans).
 - **No key permission is ever loosened to make a test pass** — ownership is fixed instead (`tools/own-secrets.sh` in the sender modules).
 - The truemail engine is pinned exactly and never forked (Door 5 in module 1); `assert-gem-unmodified.sh` guards it.

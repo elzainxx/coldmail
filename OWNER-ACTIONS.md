@@ -4,7 +4,7 @@
 every module's `Docs/future-work.md` holds only deferred *engineering* that needs no decision from you. Each module's `Docs/go-live-checklist.md`
 keeps the per-row status and the evidence (✅ done · ⏳ owner · 🔧 build task · ➖ n/a); this file is the order to work through them in.
 
-Written 2026-11-13. Nothing below blocks the code or CI — all four repositories are sealed and the three code repositories are green on GitHub
+Written 2026-11-13, updated 2026-11-14. Nothing below blocks the code or CI — all four repositories are sealed and the three code repositories are green on GitHub
 Actions (see `README.md` for the pinned heads). It all blocks *going live*. Ids point at the module's checklist row:
 **G\*** = `coldmail-verify` (M1) · **M2-GL-\*** = `coldmail-send-managed` (M2) · **M3 §n** = `coldmail-send-byo` (M3), by its checklist section.
 
@@ -95,6 +95,11 @@ Work these in each checklist's own "order of operations". Listed once here so no
 
 ### The platform (`coldmail-platform`)
 - Nothing to run. When the real platform exists, the two integration confirmations above (M2-GL-2/3, M3 §2/3) and M1's G2.7 are the platform-side facts the contract needs.
+- **Turn on checks 3 and 4 of `platform-check` in CI (repository setting, only you can).** The workflow runs checks 1 (every JSON file parses) and 2 (every internal link resolves) on every push, with controls
+  that go red on a bad file. Checks 3 (cross-repo citations resolve) and 4 (cited commit SHAs exist) need the three PRIVATE module repositories checked out beside the platform repository, and a workflow's
+  default token cannot read a sibling repository. To enable them: create a fine-grained personal access token with **read-only Contents** access to `coldmail-verify`, `coldmail-send-managed` and
+  `coldmail-send-byo`, and add it to `coldmail-platform` as the repository secret **`CROSS_REPO_READ`** (Settings → Secrets and variables → Actions). Until then the job passes on 1 and 2 and prints a warning
+  annotation saying 3 and 4 did not run — they are unverified by CI; run `coldmail-platform/tools/platform-check.sh <layout-root>` with the four repositories side by side (it needs no Docker for 2–4).
 
 ## 5. Archive the old GitHub repository
 
@@ -105,13 +110,15 @@ Archive **github.com/zexSites/codmailling-module-3** (Settings → General → *
 
 - **Raise WSL memory.** `C:\Users\Zain\.wslconfig` currently has `memory=8GB`; the heavy gates (Postgres + Go build + Ruby image together) were reaped on this host. Suggested: `memory=10GB`,
   then `wsl --shutdown` and restart Docker Desktop. The CI gates run on GitHub's runners, so this only speeds local rehearsal.
-- **Docker has not started since 2026-11-12 19:29** (Docker Desktop: "distro installation failed" = `HCS_E_HYPERV_NOT_INSTALLED`). The Windows hypervisor log says *"Hypervisor launch failed; Either VMX not
+- **BLOCKED: Docker is down on the owner's machine, and is expected to stay down.** Nothing in the repositories needs it any more: every test, gate and secret scan now runs on GitHub Actions
+  (the runner is the only admissible test environment, and `gitleaks.yml` scans the full history of all five repositories on every push). It only blocks local rehearsal and the cleanup in the next bullet.
+  **Docker has not started since 2026-11-12 19:29** (Docker Desktop: "distro installation failed" = `HCS_E_HYPERV_NOT_INSTALLED`). The Windows hypervisor log says *"Hypervisor launch failed; Either VMX not
   present or not enabled in BIOS"* on every boot since then, and `systeminfo` says *Virtualization Enabled In Firmware: No* — the machine's firmware stopped exposing Intel VT-x (an ASUS board, i5-11400F; it began with a
   7-second reboot after an unclean shutdown, and the BIOS clock was not reset, so it is probably not the CMOS battery). **You told me you could not get into the BIOS.** Until that is fixed no Docker, WSL2 or
   local container work is possible (CI is unaffected). Try: Del or F2 held from power-on (or Windows → Settings → System → Recovery → Advanced startup → UEFI Firmware Settings), then Advanced → CPU Configuration →
   Intel (VMX) Virtualization Technology → Enabled → F10. After the fix `systeminfo | findstr /i Virtualization` must say *Yes*; then restart Docker Desktop. If the board keeps dropping its settings, suspect the PSU or
-  RAM (XMP) stability. This session's secret scans ran with a checksum-verified native `gitleaks` for that reason (recorded in the platform's `verification-runs.md`, fifth pass).
-- **Docker leftovers from this project, not removed because Docker could not start** (say "Docker is back" and I will do it, or run it yourself). Look first with `docker images` and `docker volume ls`;
+  RAM (XMP) stability. The pre-push secret scans of this period ran with a checksum-verified native `gitleaks` for that reason (recorded in the platform's `verification-runs.md`); the same scan now also runs on the runner after every push.
+- **BLOCKED: Docker down on owner's machine — Docker leftovers from this project, not removed because Docker cannot start** (when Docker is back, say so and I will do it, or run it yourself). Look first with `docker images` and `docker volume ls`;
   these are the ones this project created:
   - images (tags): `cm-audit-m1-node:run`, `tm-r34:ci`, `tmvn-p2-test*`, `tm-diag`, `tm-diag3`, `zricethezav/gitleaks:latest`;
   - twelve dangling images proven to be truemail builds (they contain the truemail gem): `9a2f55b9dcf2 3002b09fdda1 49ccab0caab3 b0fc9a9dcd39 fa28128f200c 67009fe75006 f6260b96bd9e ba4c1d556362 fda1cf630bc8 73e7089e9939 f15ceaf17781 80da478a7c71`;
@@ -147,6 +154,10 @@ M3 has no parked decisions of this kind (its 113 ledger ids are all ruled or clo
 - **CLAUDE.md status blocks (M2 and M3).** Both modules' `CLAUDE.md` Rule 8 says the file changes only by a deliberate, reviewed PR. In the 2026-11-13 docs unification the *status blocks* were
   rewritten (M3: the 2026-08-01 text said "Phases 2–8 are planned … not yet built", which had been false for months) and a dated note was appended in M2 (57 config keys; new ledger path). The **rules** were not
   touched. Read the two diffs (`git log -p -- CLAUDE.md`) and either accept them or revert.
+- **Two copy verdicts in module 3 are mine, and the ruling reserves them for a human.** The new user-copy ledger gate found two user-visible strings the 2026-08 audit never covered (the reason text of account
+  events, `account_events.alignment_ack_reason` and `account_events.credential_clear_note`). I added them to the ledger and gave each a PASS verdict in `coldmail-send-byo/Docs/user-facing-copy.md` §2.4. The gate
+  proves the ledger is complete and coherent; it cannot prove those two verdicts true. Read them. Also: the gate scans a curated list of files that render copy (`copySites` in
+  `services/control/internal/copyledger/copyledger_test.go`); a NEW file that renders copy must be added to it.
 - **Leftovers I did not delete because I could not tell what they are** (nothing on GitHub was deleted):
   - `coldmail-send-managed/.claude/settings.local.json` — a local Claude Code settings file; harmless, not tracked.
   - `coldmail-send-managed/Docs/history/mailflow-worker (Sender Inspiration)/` — a reference codebase with its own nested `.git`, gitignored and not part of the repository (a fresh clone will not have it); `Docs/history/README.md` and `phase-build-record.md` cite it. Left in place; delete it if you no longer want the reference.
@@ -158,6 +169,8 @@ M3 has no parked decisions of this kind (its 113 ledger ids are all ruled or clo
 
 - **Node 24 is the pinned LTS runtime; Node 26 now exists.** Moving is a deliberate bump (re-resolve the digest, run the box suite), not an emergency.
 - **M3's campaign-expiry evidence (Stage 10.4/10.6) is not determined** — the original evidence is in none of the four repositories. `campaign_expiry_mode` ships at `shadow`, so campaign expiry does not enforce until you decide (§4, M3 §6).
-- **Three deferred engineering items were registered during the close:** FW-M3-20 (an FK from `jobs.campaign_id` to `campaigns`), FW-M3-21 (the user-copy ledger gate that M3-P8-OD-3 ruled but nobody built) and FW-M3-22 (a concurrency test whose proof-of-overlap assertion failed once on a runner, then passed on a re-run of the same commit). They are in M3's `Docs/future-work.md`; none needs a decision from you.
+- **Three engineering items were registered during the close; two are now built, one is still deferred.** FW-M3-20 (an FK from `jobs.campaign_id` to `campaigns`) is deferred, with its reopen trigger, in M3's `Docs/future-work.md`; it needs no decision from you.
+  FW-M3-21 (the user-copy ledger gate that M3-P8-OD-3 ruled) is **built** (2026-11-14). FW-M3-22 (a concurrency test whose proof of overlap failed once on a runner) is **fixed** in M3 and M2 (2026-11-14): the contention is now built, not
+  hoped for; proven by a gate with four mutants that must each go red, and by 50 consecutive passes in each module. One thing stays unforced and is stated in the code and the docs: the MVCC re-check path (a peer whose snapshot predates the holder's commit).
 - **Ports in the dev stack:** M3 Mailpit on host `9025`, M3 Control on `9080` (a +1000 offset from M2 so both run side by side).
 - **M1 migration 0010** had one comment line edited (a doc path) in the unification; migrations are not checksum-tracked in M1 (FW-3), and nothing about the schema changed.
