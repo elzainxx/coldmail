@@ -95,11 +95,7 @@ Work these in each checklist's own "order of operations". Listed once here so no
 
 ### The platform (`coldmail-platform`)
 - Nothing to run. When the real platform exists, the two integration confirmations above (M2-GL-2/3, M3 §2/3) and M1's G2.7 are the platform-side facts the contract needs.
-- **Turn on checks 3 and 4 of `platform-check` in CI (repository setting, only you can).** The workflow runs checks 1 (every JSON file parses) and 2 (every internal link resolves) on every push, with controls
-  that go red on a bad file. Checks 3 (cross-repo citations resolve) and 4 (cited commit SHAs exist) need the three PRIVATE module repositories checked out beside the platform repository, and a workflow's
-  default token cannot read a sibling repository. To enable them: create a fine-grained personal access token with **read-only Contents** access to `coldmail-verify`, `coldmail-send-managed` and
-  `coldmail-send-byo`, and add it to `coldmail-platform` as the repository secret **`CROSS_REPO_READ`** (Settings → Secrets and variables → Actions). Until then the job passes on 1 and 2 and prints a warning
-  annotation saying 3 and 4 did not run — they are unverified by CI; run `coldmail-platform/tools/platform-check.sh <layout-root>` with the four repositories side by side (it needs no Docker for 2–4).
+- **Deploy keys that exist (nothing to do; listed so you know where they are):** three read-only SSH deploy keys, one per module repository, titled "coldmail-platform CI (read-only)" — `coldmail-verify` (id 169900977, `SHA256:AgMT7+FH//HW5Ro0SjcWOhl71ZY3rBk3bC5a+tDp4Ck`), `coldmail-send-managed` (id 169900980, `SHA256:4qYiUQFseqX4NvtMauXRdTebmgBYqoXau6Q7V+IImYE`), `coldmail-send-byo` (id 169900981, `SHA256:pVn6gN+G6C/Q732Y2hRMbD4a8MvbkX5JYqGDJJA6VWI`) — under each repository's Settings → Deploy keys; their private halves are the Actions secrets `DEPLOY_KEY_COLDMAIL_VERIFY`, `DEPLOY_KEY_COLDMAIL_SEND_MANAGED`, `DEPLOY_KEY_COLDMAIL_SEND_BYO` on `coldmail-platform` and exist nowhere else. To revoke or rotate, delete the key there; `platform-check` goes red until a new pair is installed.
 
 ## 5. Archive the old GitHub repository
 
