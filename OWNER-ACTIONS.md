@@ -1,11 +1,11 @@
 # Owner actions — everything only you can do
 
-**This is the one list.** Nothing open lives anywhere else: every module's decision ledger (`Docs/open-decisions.md`) is at **zero open**, and
-every module's `Docs/future-work.md` holds only deferred *engineering* that needs no decision from you. Each module's `Docs/go-live-checklist.md`
+**This is the one list, and it holds only things a person has to do in the real world.** Nothing that code can close is on it: every module's decision ledger (`Docs/open-decisions.md`) is at **zero open**,
+and every module's `Docs/future-work.md` holds only deferred *engineering* that needs no decision from you. Each module's `Docs/go-live-checklist.md`
 keeps the per-row status and the evidence (✅ done · ⏳ owner · 🔧 build task · ➖ n/a); this file is the order to work through them in.
 
 Written 2026-11-13, updated 2026-11-14. Nothing below blocks the code or CI — all four repositories are sealed and the three code repositories are green on GitHub
-Actions (see `README.md` for the pinned heads). It all blocks *going live*. Ids point at the module's checklist row:
+Actions (see `README.md` for the pinned heads). It all blocks *going live*, or is about your own machine. Ids point at the module's checklist row:
 **G\*** = `coldmail-verify` (M1) · **M2-GL-\*** = `coldmail-send-managed` (M2) · **M3 §n** = `coldmail-send-byo` (M3), by its checklist section.
 
 ---
@@ -91,11 +91,11 @@ Work these in each checklist's own "order of operations". Listed once here so no
 - **§1** — walk the real self-serve path as a throwaway user (`POST /v1/send-byo/accounts` → From gate → routable; `accounts.healthy >= 1`; one `quote → run → report` to `sent`). **§5** — provision production workers out of band. **§7** — confirm each sending account is pre-warmed.
 - **Pre-flight on the day** — your production unit's SIGTERM grace clears `shutdown_drain_timeout_sec`; `/readyz` and `/v1/admin/health` as above; full harness against the images you deploy; read `Docs/future-work.md` and accept the V1 limits (chiefly **no bounce or complaint ingestion**).
 - **§14 (required, after an observation window)** — promote `retention_mode` and `account_purge_mode` to `enforce`, one at a time, each after reading its shadow count; `account_purge_mode=enforce` is irreversible per row. Until both are promoted, `send_logs` grows without bound and a deleted user's SMTP credential outlives its promised window.
-- **§6** — decide when to promote `autoquarantine_mode`, `autopause_mode`, `campaign_expiry_mode` from `shadow` (open-ended posture decisions).
+- **§6** — decide when to promote `autoquarantine_mode`, `autopause_mode`, `campaign_expiry_mode` from `shadow` (open-ended posture decisions). Campaign expiry does not enforce until you do, and the original evidence for its window (Stage 10.4/10.6) is in none of the four repositories, so the value cannot be re-derived from them.
 
 ### The platform (`coldmail-platform`)
 - Nothing to run. When the real platform exists, the two integration confirmations above (M2-GL-2/3, M3 §2/3) and M1's G2.7 are the platform-side facts the contract needs.
-- **Deploy keys that exist (nothing to do; listed so you know where they are):** three read-only SSH deploy keys, one per module repository, titled "coldmail-platform CI (read-only)" — `coldmail-verify` (id 169900977, `SHA256:AgMT7+FH//HW5Ro0SjcWOhl71ZY3rBk3bC5a+tDp4Ck`), `coldmail-send-managed` (id 169900980, `SHA256:4qYiUQFseqX4NvtMauXRdTebmgBYqoXau6Q7V+IImYE`), `coldmail-send-byo` (id 169900981, `SHA256:pVn6gN+G6C/Q732Y2hRMbD4a8MvbkX5JYqGDJJA6VWI`) — under each repository's Settings → Deploy keys; their private halves are the Actions secrets `DEPLOY_KEY_COLDMAIL_VERIFY`, `DEPLOY_KEY_COLDMAIL_SEND_MANAGED`, `DEPLOY_KEY_COLDMAIL_SEND_BYO` on `coldmail-platform` and exist nowhere else. To revoke or rotate, delete the key there; `platform-check` goes red until a new pair is installed.
+- **Deploy keys (nothing to do — so you know where they are):** three read-only deploy keys titled "coldmail-platform CI (read-only)", one under Settings → Deploy keys on each of `coldmail-verify` (id 169900977), `coldmail-send-managed` (169900980) and `coldmail-send-byo` (169900981); their private halves are the Actions secrets `DEPLOY_KEY_COLDMAIL_VERIFY`, `DEPLOY_KEY_COLDMAIL_SEND_MANAGED`, `DEPLOY_KEY_COLDMAIL_SEND_BYO` on `coldmail-platform` and exist nowhere else; delete a key and `platform-check` goes red until a new pair is installed.
 
 ## 5. Archive the old GitHub repository
 
@@ -145,24 +145,14 @@ Open Decision in that module (and an ADR where it resolves a design question).
 
 M3 has no parked decisions of this kind (its 113 ledger ids are all ruled or closed).
 
-## 8. Reviews I could not do for you
+## 8. A review and some leftovers only you can judge
 
 - **CLAUDE.md status blocks (M2 and M3).** Both modules' `CLAUDE.md` Rule 8 says the file changes only by a deliberate, reviewed PR. In the 2026-11-13 docs unification the *status blocks* were
   rewritten (M3: the 2026-08-01 text said "Phases 2–8 are planned … not yet built", which had been false for months) and a dated note was appended in M2 (57 config keys; new ledger path). The **rules** were not
   touched. Read the two diffs (`git log -p -- CLAUDE.md`) and either accept them or revert.
-- **Leftovers I did not delete because I could not tell what they are** (nothing on GitHub was deleted):
+- **Leftovers I did not delete because I could not tell what they are** (nothing on GitHub was deleted beyond the three merged branches you authorized):
   - `coldmail-send-managed/.claude/settings.local.json` — a local Claude Code settings file; harmless, not tracked.
   - `coldmail-send-managed/Docs/history/mailflow-worker (Sender Inspiration)/` — a reference codebase with its own nested `.git`, gitignored and not part of the repository (a fresh clone will not have it); `Docs/history/README.md` and `phase-build-record.md` cite it. Left in place; delete it if you no longer want the reference.
-  - Docker: nine unattributable dangling images, ~48 old anonymous volumes and the `gomodcache` volume; images and volumes belonging to other projects (warmup, supabase, android, baserow).
   - Folders named in the cleanup brief that **do not exist** on this disk: `Codmailling 2`, `Codmailling 3`, `Codmailling 3 - planning (pre-fork)` (so there is no zip of it) and `D:\Mnfi\tmp_od`. `New folder (3)` was found in
     three unrelated places and none was touched — tell me which, if any, is yours.
-
-## 9. Facts to know (not actions)
-
-- **Node 24 is the pinned LTS runtime; Node 26 now exists.** Moving is a deliberate bump (re-resolve the digest, run the box suite), not an emergency.
-- **M3's campaign-expiry evidence (Stage 10.4/10.6) is not determined** — the original evidence is in none of the four repositories. `campaign_expiry_mode` ships at `shadow`, so campaign expiry does not enforce until you decide (§4, M3 §6).
-- **Three engineering items were registered during the close; two are now built, one is still deferred.** FW-M3-20 (an FK from `jobs.campaign_id` to `campaigns`) is deferred, with its reopen trigger, in M3's `Docs/future-work.md`; it needs no decision from you.
-  FW-M3-21 (the user-copy ledger gate that M3-P8-OD-3 ruled) is **built** (2026-11-14). FW-M3-22 (a concurrency test whose proof of overlap failed once on a runner) is **fixed** in M3 and M2 (2026-11-14): the contention is now built, not
-  hoped for; proven by a gate with four mutants that must each go red, and by 50 consecutive passes in each module. One thing stays unforced and is stated in the code and the docs: the MVCC re-check path (a peer whose snapshot predates the holder's commit).
-- **Ports in the dev stack:** M3 Mailpit on host `9025`, M3 Control on `9080` (a +1000 offset from M2 so both run side by side).
-- **M1 migration 0010** had one comment line edited (a doc path) in the unification; migrations are not checksum-tracked in M1 (FW-3), and nothing about the schema changed.
+  - `coldmail-verify` still has four `phase-*` branches on GitHub (`phase-2-smtp-mocks`, `phase-3-first-real-box`, `phase-4-resilience-pool`, `phase-5-queue`); they were never part of any deletion authorization and were not touched.
