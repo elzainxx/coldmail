@@ -154,15 +154,9 @@ M3 has no parked decisions of this kind (its 113 ledger ids are all ruled or clo
 - **CLAUDE.md status blocks (M2 and M3).** Both modules' `CLAUDE.md` Rule 8 says the file changes only by a deliberate, reviewed PR. In the 2026-11-13 docs unification the *status blocks* were
   rewritten (M3: the 2026-08-01 text said "Phases 2–8 are planned … not yet built", which had been false for months) and a dated note was appended in M2 (57 config keys; new ledger path). The **rules** were not
   touched. Read the two diffs (`git log -p -- CLAUDE.md`) and either accept them or revert.
-- **Two copy verdicts in module 3 are mine, and the ruling reserves them for a human.** The new user-copy ledger gate found two user-visible strings the 2026-08 audit never covered (the reason text of account
-  events, `account_events.alignment_ack_reason` and `account_events.credential_clear_note`). I added them to the ledger and gave each a PASS verdict in `coldmail-send-byo/Docs/user-facing-copy.md` §2.4. The gate
-  proves the ledger is complete and coherent; it cannot prove those two verdicts true. Read them. Also: the gate scans a curated list of files that render copy (`copySites` in
-  `services/control/internal/copyledger/copyledger_test.go`); a NEW file that renders copy must be added to it.
 - **Leftovers I did not delete because I could not tell what they are** (nothing on GitHub was deleted):
   - `coldmail-send-managed/.claude/settings.local.json` — a local Claude Code settings file; harmless, not tracked.
   - `coldmail-send-managed/Docs/history/mailflow-worker (Sender Inspiration)/` — a reference codebase with its own nested `.git`, gitignored and not part of the repository (a fresh clone will not have it); `Docs/history/README.md` and `phase-build-record.md` cite it. Left in place; delete it if you no longer want the reference.
-  - Three merged working branches remain on GitHub — `coldmail-send-byo`: `contention-fix`, `copy-ledger-2`; `coldmail-send-managed`: `contention-fix`. Each was fast-forwarded into `main` (nothing is unmerged on them); they hold the
-    runs cited in the platform's `verification-runs.md`, sixth pass. I never delete anything on GitHub; delete them if you want a tidy branch list.
   - Docker: nine unattributable dangling images, ~48 old anonymous volumes and the `gomodcache` volume; images and volumes belonging to other projects (warmup, supabase, android, baserow).
   - Folders named in the cleanup brief that **do not exist** on this disk: `Codmailling 2`, `Codmailling 3`, `Codmailling 3 - planning (pre-fork)` (so there is no zip of it) and `D:\Mnfi\tmp_od`. `New folder (3)` was found in
     three unrelated places and none was touched — tell me which, if any, is yours.
