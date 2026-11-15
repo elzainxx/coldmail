@@ -1,7 +1,7 @@
 # Owner actions — everything only you can do
 
 **This is the one list, and it holds only things a person has to do in the real world.** Nothing that code can close is on it: every module's decision ledger (`Docs/open-decisions.md`) is at **zero open**,
-and every module's `Docs/future-work.md` holds only deferred *engineering* that needs no decision from you. Each module's `Docs/go-live-checklist.md`
+and every module's `Docs/future-work.md` holds only deferred *engineering* that needs no decision from you, apart from the choices parked under its own **PARKED** heading (M1 §5, M2 §7b; M3 has none). Each module's `Docs/go-live-checklist.md`
 keeps the per-row status and the evidence (✅ done · ⏳ owner · 🔧 build task · ➖ n/a); this file is the order to work through them in.
 
 Written 2026-11-13, updated 2026-11-14. Nothing below blocks the code or CI — all four repositories are sealed and the three code repositories are green on GitHub
@@ -95,6 +95,7 @@ Work these in each checklist's own "order of operations". Listed once here so no
 
 ### The platform (`coldmail-platform`)
 - Nothing to run. When the real platform exists, the two integration confirmations above (M2-GL-2/3, M3 §2/3) and M1's G2.7 are the platform-side facts the contract needs.
+- **Supabase project (not needed yet):** Phase 0 wired a migrator and a `platform` schema but created no Supabase project and ran everything against stock Postgres. Before Phase 1's tables meet the real database, create the project and confirm which admin role runs the migrations (Supabase's `postgres` is not a superuser, so the modules' `CREATE ROLE` / `OWNER TO` migrations need checking against it — this is M2-GL-3 / M3 §3 above); the migrator needs the **direct** (session-mode) connection string, not the pooler.
 - **Deploy keys (nothing to do — so you know where they are):** three read-only deploy keys titled "coldmail-platform CI (read-only)", one under Settings → Deploy keys on each of `coldmail-verify` (id 169900977), `coldmail-send-managed` (169900980) and `coldmail-send-byo` (169900981); their private halves are the Actions secrets `DEPLOY_KEY_COLDMAIL_VERIFY`, `DEPLOY_KEY_COLDMAIL_SEND_MANAGED`, `DEPLOY_KEY_COLDMAIL_SEND_BYO` on `coldmail-platform` and exist nowhere else; delete a key and `platform-check` goes red until a new pair is installed.
 
 ## 5. Archive the old GitHub repository
@@ -122,30 +123,10 @@ Archive **github.com/zexSites/codmailling-module-3** (Settings → General → *
 
   **Keep** `coldmail-gomod`, `coldmail-gocache`, `coldmail-gobin` (`coldmail/tools/` uses them) and everything belonging to your other projects. Nine further dangling images I could not attribute to this project
   (`4e6e670bb069 a13c0b8bb0a9 11a1f0b604b1 26730869004e 0178a641fbb4 900f9c109f7a 5276a2323564 b868afa176bf b004b9c35c68`, one of them 2.6 GB) are yours to judge.
+- **Exclude the `coldmail/` folder from Norton real-time scanning.**
 - **Free space on `C:`** was 3.3 GB on 2026-11-13. Docker's disk lives on `D:` (`D:\Applications\DockerWSL`), but Windows itself, and WSL's default swap and temp files, are on `C:`; keep several GB free.
 
-## 7. Decisions that need you and have no recorded recommendation
-
-Not open decisions (every ledger is at zero) — deferred choices nobody has made. None blocks go-live; the built behaviour is safe. Taking one up means raising an
-Open Decision in that module (and an ADR where it resolves a design question).
-
-| id | the choice | module doc |
-|---|---|---|
-| M1 FW-6 | `signals.platform` is a reserved response key nobody populates: assign it to a phase, or declare it Phase 8+? | `coldmail-verify/Docs/future-work.md` §5 |
-| M1 FW-7 | Who owns the catch-all re-probe loop on `catchall_domains.expires_at`: the health-watcher, the queue, or Phase 8+? | same |
-| M1 FW-8 | Should a brake held for a human ever time out (stay held, or auto-release)? Should the human confirm be an authenticated, audited action (needs the unbuilt DR-3)? Today: stay held, no timeout. | same |
-| M1 FW-9 | An external tamper-evidence checkpoint (periodic hash chain of `verifications` to write-once storage), or accept grant-based immutability with the documented `cp_admin` residual? Today: the latter. | same |
-| M2-FW-1 | How often, and who reviews, a bump of the digest-pinned base images (every image is pinned, so nothing patches a base until someone bumps it). | `coldmail-send-managed/Docs/future-work.md` §5 |
-| M2-FW-2 | Adopt M3's RESERVED-marker *expiry* rule for `config_consumption`, and decide the two live RESERVED keys `retry_count_4xx` and `variation_zero_width_rate_pct` (M3's precedent: drop the key). | same |
-| M2-FW-3 | Close the `smtp_host` credential-redirect path: require `smtp_secret` re-entry when `smtp_host` changes, and/or an allowlist of SMTP hosts. Changes a documented `PATCH`. | §4a · `security-posture.md` §3.11 |
-| M2-FW-4 | Reject private-range `smtp_host` at write time vs. gating the worker's self-signed affordance behind a dev flag; and restrict `alert_webhook_url`'s destination (blocklist vs allowlist). | §4a · `security-posture.md` §3.13–3.14 |
-| M2-FW-5 | May deleting a platform user cascade to `send_managed.pools` (one-call tenant erasure)? | §4 |
-| M2-FW-6 | Dedicated → dedicated pool fallback: whose accounts may carry whose mail, and the billing consequence. | §2 |
-| M2-FW-7 | Per-pool (or per-account) scope for the content-variation toggles: resolution order and storage. | §2 |
-
-M3 has no parked decisions of this kind (its 113 ledger ids are all ruled or closed).
-
-## 8. A review and some leftovers only you can judge
+## 7. A review and some leftovers only you can judge
 
 - **CLAUDE.md status blocks (M2 and M3).** Both modules' `CLAUDE.md` Rule 8 says the file changes only by a deliberate, reviewed PR. In the 2026-11-13 docs unification the *status blocks* were
   rewritten (M3: the 2026-08-01 text said "Phases 2–8 are planned … not yet built", which had been false for months) and a dated note was appended in M2 (57 config keys; new ledger path). The **rules** were not
@@ -153,6 +134,6 @@ M3 has no parked decisions of this kind (its 113 ledger ids are all ruled or clo
 - **Leftovers I did not delete because I could not tell what they are** (nothing on GitHub was deleted beyond the three merged branches you authorized):
   - `coldmail-send-managed/.claude/settings.local.json` — a local Claude Code settings file; harmless, not tracked.
   - `coldmail-send-managed/Docs/history/mailflow-worker (Sender Inspiration)/` — a reference codebase with its own nested `.git`, gitignored and not part of the repository (a fresh clone will not have it); `Docs/history/README.md` and `phase-build-record.md` cite it. Left in place; delete it if you no longer want the reference.
+  - **The 16 `fault/p0-*` branches on `github.com/elzainxx/coldmail-platform`** — Phase 0's proof that every gate goes red (one throwaway branch per gate, each ending in a revert commit; the list and the run URLs are in `coldmail-platform/Docs/phase-0-spec.md`). They were not deleted because only the four merged M1 branches were authorized. Delete them when you like, then delete the one line in `coldmail-platform/.gitleaksignore` (it exists only because the scan reads every branch).
   - Folders named in the cleanup brief that **do not exist** on this disk: `Codmailling 2`, `Codmailling 3`, `Codmailling 3 - planning (pre-fork)` (so there is no zip of it) and `D:\Mnfi\tmp_od`. `New folder (3)` was found in
     three unrelated places and none was touched — tell me which, if any, is yours.
-  - `coldmail-verify` still has four `phase-*` branches on GitHub (`phase-2-smtp-mocks`, `phase-3-first-real-box`, `phase-4-resilience-pool`, `phase-5-queue`); they were never part of any deletion authorization and were not touched.
