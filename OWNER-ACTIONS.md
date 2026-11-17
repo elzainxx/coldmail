@@ -4,8 +4,8 @@
 and every module's `Docs/future-work.md` holds only deferred *engineering* that needs no decision from you, apart from the choices parked under its own **PARKED** heading (M1 §5, M2 §7b; M3 has none). Each module's `Docs/go-live-checklist.md`
 keeps the per-row status and the evidence (✅ done · ⏳ owner · 🔧 build task · ➖ n/a); this file is the order to work through them in.
 
-Written 2026-11-13, updated 2026-11-14. Nothing below blocks the code or CI — all four repositories are sealed and the three code repositories are green on GitHub
-Actions (see `README.md` for the pinned heads). It all blocks *going live*, or is about your own machine. Ids point at the module's checklist row:
+Written 2026-11-13, updated 2026-11-17 (Phase 2 close-out). Nothing below blocks the code or CI **except the GitHub Actions billing item in the platform section** — the repositories were green on GitHub
+Actions before it (see `README.md` for the pinned heads). It all blocks *going live*, or is about your own machine. Ids point at the module's checklist row:
 **G\*** = `coldmail-verify` (M1) · **M2-GL-\*** = `coldmail-send-managed` (M2) · **M3 §n** = `coldmail-send-byo` (M3), by its checklist section.
 
 ---
@@ -47,25 +47,28 @@ Nothing SMTP-level can run until a host exists that can open outbound port 25. T
    (redundant, geo-separate, access-audited — losing the pepper de-joins all history); control-plane host hardening (core-dump suppression, access control, PN-12 threat model).
 10. **G1.16, G1.17** — observe a real greylist reject-then-accept round trip (un-mockable, GAP-35); two-box reputation isolation (needs two real IPs).
 
-## 3. The paid vendor and its DPA (M1) — G2.1 … G2.9
+## 3. The paid vendor (ZeroBounce) and its DPA (M1) — G2.1 … G2.9
 
-External fallback sends addresses to a third party; **enabling it before the DPA is signed is unlawful sub-processing.** Order matters.
+External fallback sends addresses to a third party; **enabling it before the DPA is signed is unlawful sub-processing.** Order matters. **The vendor is ZeroBounce (ruled) and its client is built and shipped DISABLED** (Phase 2 close-out A6: `coldmail-verify/Docs/vendor-zerobounce.md`). Nothing is sent to ZeroBounce until you have done every step below, in this order:
 
-1. **G2.1** — select one verification vendor (a commercial decision).
-2. **G2.2** — **sign the DPA** and complete the §7.4 due-diligence checklist: retention, deletion, TLS, key custody. (The Phase 6 spec's example is "MillionVerifier or similar"; no vendor is chosen.)
-3. **G2.4** — set the budget ceilings (`TM_EXTERNAL_DAILY_CAP`, `_MONTHLY_CAP`, `_PER_JOB_CAP`, `_RATE_CEILING`) once you have observed residue-tail volume; policy "start low, raise from data" is ruled, only the numbers wait.
-4. **G2.6** — the platform's disclosure wording for vendor egress, with an opt-out (ruled: disclose and offer the opt-out). **G2.7** — verify at integration that the platform opt-out flag ↔ a policy without the `external` block, 1:1.
-5. **G2.5** — flip the three switches only after 1–4: `TM_EXTERNAL_DPA_CONFIRMED=true`, `TM_FALLBACK_MODE=enabled`, a `TM_VENDOR_KEYS` entry.
-6. **G2.8, G2.9** — standing vendor controls (cumulative-egressed metric; a periodic vendor-deletion request, PN-7); measure the vendor's real accuracy on the residue (never claimed until measured).
+1. **Create the ZeroBounce account** (G2.1 — the commercial decision is made: ZeroBounce).
+2. **Sign the DPA** and complete the §7.4 due-diligence checklist: retention, deletion, TLS, key custody (G2.2).
+3. **Verify the status mapping against ZeroBounce's live API documentation.** The mapping table in `coldmail-verify/Docs/vendor-zerobounce.md` was built from ZeroBounce's official SDKs (their documentation site refused automated access); it carries a visible NOTE and lists what is UNVERIFIED (rate-limit behaviour, error bodies, whether an `unknown` answer is billed, price per call). Read that list against the live docs and tell me of any difference **before** you switch the vendor on.
+4. **Put the API key in the environment variable the dial names**: `TM_EXTERNAL_ZEROBOUNCE_KEY_ENV` names the variable (default `ZEROBOUNCE_API_KEY`). The key itself lives only in that variable on the control-plane host; it is never in a repository, a workflow or a config file. (`TM_VENDOR_KEYS` is no longer read.)
+5. **Set the daily spend cap** `TM_EXTERNAL_DAILY_SPEND_CAP` (credits per UTC day; the default 0 sends nothing) and, once you have seen the residue-tail volume, the other budget ceilings (`TM_EXTERNAL_DAILY_CAP`, `_MONTHLY_CAP`, `_PER_JOB_CAP`, `_RATE_CEILING`) — policy "start low, raise from data" is ruled, only the numbers wait (G2.4).
+6. **Set the platform price of the vendor unit**: `platform.unit_costs` seeds `m1_vendor` at 2 as a placeholder; it must stay above 1 and cover what ZeroBounce charges you per call (an admin setting).
+7. **G2.6** — the platform's disclosure wording for vendor egress, with an opt-out (ruled: disclose and offer the opt-out). **G2.7** — verify at integration that the platform opt-out flag ↔ a policy without the `external` block, 1:1.
+8. **Then switch the vendor on** (G2.5): `TM_EXTERNAL_DPA_CONFIRMED=true` and `TM_FALLBACK_MODE=enabled` on the control plane (the kill-switch rung and the daily spend cap stay as the brakes).
+9. **G2.8, G2.9** — standing vendor controls (cumulative-egressed metric; a periodic vendor-deletion request, PN-7); measure the vendor's real accuracy on the residue (never claimed until measured).
 
-The real vendor adapter itself (G2.3) is a **build task**, blocked on G2.1 — it is in `coldmail-verify/Docs/future-work.md` §4, not here.
+The vendor adapter (G2.3) is **built** (no longer a build task); what remains here is only the owner steps above.
 
 ## 4. The go-live checklist items that remain, per module
 
 Work these in each checklist's own "order of operations". Listed once here so nothing is only in a module doc.
 
 ### M1 `coldmail-verify` — besides sections 2 and 3
-- **G0.3** — apply migrations 0001…0015 to the production database and confirm `verification_raw` partition headroom.
+- **G0.3** — apply migrations 0001…0018 to the production database and confirm `verification_raw` partition headroom.
 - **G0.4** — re-run `govulncheck ./...` in `control-plane/` immediately before the pilot (clean 2026-11-07; the advisory database moves).
 - **G3.1, G3.2** — the sender emits the locked `send_outcome` shape on an authenticated feed; provision the mTLS trust anchor and the control plane's client credential (arrive with the sender).
 - **G3.5** — the platform's disclosure wording "your sends train our accuracy" (disclose-don't-hide is ruled). **G3.6** — real accuracy numbers, and promotion/weaning actually firing (needs real outcomes over time).
@@ -99,7 +102,8 @@ Work these in each checklist's own "order of operations". Listed once here so no
 - **In Supabase, remove `public` (and `platform`) from the exposed API schemas** (Settings → API → *Exposed schemas*). The platform's tables are reached only by its Go service over the database connection, never through the Data API; the platform revokes `anon`, `authenticated` and `service_role` on its two `public` tables and enables **no** row-level security (ruled). A runner cannot check this setting: it is yours.
 - **First admin.** After the first Supabase login exists, run `platform-migrate create-first-admin --auth-user-id <id> --display-name "<name>"` (`coldmail-platform/Docs/install.md` step 4). Admin management is Phase 7.
 - **Vendor-fallback price.** `platform.unit_costs` seeds `m1_vendor` at 2 as a placeholder; it is an admin setting (must stay above 1). Choose the real number before launch.
-- **Phase 2 decisions that are yours** (`coldmail-platform/Docs/phase-2-spec.md`, "Open decisions" 1-15). The two that need a MODULE change before launch: **module 1's bulk results carry no per-item id or address** (a verdict cannot be tied to an input row, so "settlement matches the report item by item" cannot hold) and **module 1's dedup is global and permanent across jobs and owners** (an address any tenant ever verified returns no result in a later job). Also yours: whether to ask module 2 for a cancel route and an attempt cap, whether to ask module 3 for a suspension read route, whether the five ambiguous module-1 `unknown` reasons are charged or free (they are never charged today), and whether to keep the one gitleaks exception for a placeholder SMTP-sink password or have two commits rewritten.
+- **GitHub Actions is blocked (time-critical, yours).** From 2026-11-17 ~00:07 UTC every repository's workflow runs are refused with *"The job was not started because recent account payments have failed or your spending limit needs to be increased"*. Open GitHub → Settings → Billing and plans (Actions usage and the spending limit) and fix the payment method or raise the limit; the Phase 2 close-out cannot be proven until runners work, because only a runner's evidence counts. Remove this bullet once runs start again.
+- **Phase 2 decisions: all ruled and built** (`coldmail-platform/Docs/phase-2-closeout-spec.md` has each with its evidence). What is still yours from them: (a) the **ZeroBounce steps in section 3** above; (b) **an unparseable address is charged**: since module 1 now logs and serves a malformed bulk row as `invalid/invalid_syntax`, the charge table charges it like any settled answer (`m1_own`); the platform could instead pre-validate addresses before submit (Phase 4), tell me if you prefer that; (c) the five module-1 `unknown` reasons are now charged only when module 1 proves the recipient's server caused them (`failure_origin = remote`); the full origin table, including the cases module 1 could not classify honestly and left `undetermined` (free), is `coldmail-verify/Docs/failure-origin.md`: read the cases listed in its section 4 and say if any should lean the other way; (d) the one gitleaks exception for a placeholder SMTP-sink password stays (no history rewrite); the literal is gone from the tree and the harness mints the sink password per run.
 - **Deploy keys (nothing to do — so you know where they are):** three read-only deploy keys titled "coldmail-platform CI (read-only)", one under Settings → Deploy keys on each of `coldmail-verify` (id 169900977), `coldmail-send-managed` (169900980) and `coldmail-send-byo` (169900981); their private halves are the Actions secrets `DEPLOY_KEY_COLDMAIL_VERIFY`, `DEPLOY_KEY_COLDMAIL_SEND_MANAGED`, `DEPLOY_KEY_COLDMAIL_SEND_BYO` on `coldmail-platform` and exist nowhere else; delete a key and `platform-check` goes red until a new pair is installed.
 
 ## 5. Archive the old GitHub repository
