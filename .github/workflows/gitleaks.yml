@@ -22,6 +22,12 @@ on:
 permissions:
   contents: read
 
+# A newer run on the same ref replaces an older one that is still going. Nothing is lost by that: every run scans the FULL history (`--log-opts="--all"`), so the newer run
+# covers every commit the cancelled one would have scanned. The job reads no secret and uploads no artifact, so there is nothing for a fork's pull request to reach.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   scan:
     runs-on: ubuntu-latest
@@ -29,7 +35,7 @@ jobs:
       GITLEAKS_VERSION: "8.30.1"
       GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
           submodules: false

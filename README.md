@@ -4,6 +4,8 @@ The parent repository of the coldmail platform. It contains **no product code of
 submodules, at the commits that were verified **together**, and carries the one list of things only the owner can do
 ([`OWNER-ACTIONS.md`](OWNER-ACTIONS.md)). Its only other content is `tools/` — a local rehearsal aid for CI.
 
+Source visible for transparency; no license is granted — see [`NOTICE`](NOTICE).
+
 ## The four repositories
 
 | path | repository | what it is | has CI |
