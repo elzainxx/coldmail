@@ -5,6 +5,11 @@
 #
 # NOT CHECKED (the script says so on every run): that either side is the commit you MEANT to pin, or that it is green: only that the two agree. Whether the pinned platform commit is
 # verified is the platform's own gate (`check-verified-heads`, which reads the run records through the GitHub API).
+#
+# The same checked-out tree also lets this repository run the platform's two public-release gates on ALL FIVE repositories (they run on the pinned submodule commits, so they judge the set that is
+# pinned together): `check-license` (every LICENSE is the one canonical paragraph, every NOTICE and README says the same, nothing is called confidential) and `check-personal-details` on this
+# repository (no Windows home path, drive-letter path or unallowed IPv4 address in a tracked file; the allowlist is the platform's tests/personal-details/coldmail.allow). The four submodules are
+# checked as roots by the first gate; their own personal-details run is the platform's `gates` and `platform-check` workflows. Each gate prints what it did not check. No path filter: every push.
 name: modules-lock
 
 on:
@@ -38,3 +43,30 @@ jobs:
           printf '%s\n' "$out" | sed 's/^/    | /'
           [ "$rc" -ne 0 ] && printf '%s\n' "$out" | grep -q "FAIL: coldmail-send-byo lock 0000000000000000000000000000000000000000 !=" || { echo "CONTROL FAILED: the check did not go red naming coldmail-send-byo (rc=$rc)"; exit 1; }
           echo "control holds: a lock that names another commit is red, naming the module"
+
+      - name: LICENSE and personal details, the platform's gates on this repository and its four submodules
+        run: |
+          set -u
+          rc=0
+          P=coldmail-platform
+          bash "$P/scripts/check-license.sh" --root . --root coldmail-verify --root coldmail-send-managed --root coldmail-send-byo --root coldmail-platform || rc=1
+          bash "$P/scripts/check-personal-details.sh" --root . --allow "$P/tests/personal-details/coldmail.allow" || rc=1
+          exit "$rc"
+
+      - name: Control, the two gates go red on a changed LICENSE word and on a planted Windows path (a scratch copy of this repository's own files)
+        run: |
+          set -u +e   # the gates are EXPECTED to exit non-zero here; the runner starts bash with -e
+          S="$RUNNER_TEMP/control-gates"; rm -rf "$S"; mkdir -p "$S"; git archive HEAD | tar -x -C "$S"
+          LIC() { bash coldmail-platform/scripts/check-license.sh --root "$S" 2>&1; }
+          PD() { bash coldmail-platform/scripts/check-personal-details.sh --root "$S" --allow coldmail-platform/tests/personal-details/coldmail.allow 2>&1; }
+          # sanity: the unmodified scratch copy is green, so the reds below are caused by the planted fault and nothing else
+          out="$(LIC)"; rc=$?; [ "$rc" -eq 0 ] || { printf '%s\n' "$out"; echo "CONTROL FAILED: the unmodified scratch copy is not green for check-license (rc=$rc)"; exit 1; }
+          out="$(PD)"; rc=$?; [ "$rc" -eq 0 ] || { printf '%s\n' "$out"; echo "CONTROL FAILED: the unmodified scratch copy is not green for check-personal-details (rc=$rc)"; exit 1; }
+          sed -i 's/visible/hidden/' "$S/LICENSE"
+          out="$(LIC)"; rc=$?; printf '%s\n' "$out" | sed 's/^/    | /'
+          [ "$rc" -ne 0 ] && printf '%s\n' "$out" | grep -q "LICENSE differs from tests/license-canonical.txt" || { echo "CONTROL FAILED: check-license did not go red on a changed word of LICENSE (rc=$rc)"; exit 1; }
+          # the planted path is assembled here, never written out whole: this file is itself read by check-personal-details
+          printf '\nBuild log: %s:%sUsers%ssomeone%swork\n' C '\' '\' '\' >> "$S/README.md"
+          out="$(PD)"; rc=$?; printf '%s\n' "$out" | sed 's/^/    | /'
+          [ "$rc" -ne 0 ] && printf '%s\n' "$out" | grep -qE 'README\.md:[0-9]+: Windows home path' || { echo "CONTROL FAILED: check-personal-details did not go red on a planted Windows home path (rc=$rc)"; exit 1; }
+          rm -rf "$S"; echo "control holds: check-license is red on a changed LICENSE word and check-personal-details on a planted Windows home path"

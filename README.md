@@ -4,7 +4,7 @@ The parent repository of the coldmail platform. It contains **no product code of
 submodules, at the commits that were verified **together**, and carries the one list of things only the owner can do
 ([`OWNER-ACTIONS.md`](OWNER-ACTIONS.md)). Its only other content is `tools/` — a local rehearsal aid for CI.
 
-Source visible for transparency; no license is granted — see [`NOTICE`](NOTICE).
+Source visible for transparency only; all rights reserved (see LICENSE and NOTICE).
 
 ## The four repositories
 
@@ -15,7 +15,7 @@ Source visible for transparency; no license is granted — see [`NOTICE`](NOTICE
 | `coldmail-send-byo` | [`elzainxx/coldmail-send-byo`](https://github.com/elzainxx/coldmail-send-byo) | **Module 3 — sending on a user's own SMTP accounts.** Forked from module 2 at its tag `module3-fork-point`; adds the From-gate (SPF / DMARC / DKIM alignment), campaigns, quarantine and notifications. | yes |
 | `coldmail-platform` | [`elzainxx/coldmail-platform`](https://github.com/elzainxx/coldmail-platform) | **The platform.** Phases 0 (groundwork) and 1 (schema) are done, and Phase 2 (the Phase 1 rulings and the money core: grant, reserve, settle, release, adjustment, module-3 entitlements with their expiry and delivery loops) is done: a Go service skeleton, a React + TypeScript + Tailwind placeholder, the `platform` schema (users, jobs, per-module balances, an append-only ledger, unit costs, M3 entitlements, suppressions, the admin audit) and its migrator, module 1 moved into its own `verify` schema, and a real-infrastructure harness that builds the three modules from the commits pinned in its `tools/modules.lock` and runs them as real services beside the platform against its real `public.users` / `public.job_items`. Also the canonical module contract, the cross-module audit, everything that was deferred and why, and the record of what was actually verified. | yes — `go`, `web`, `gates`, `harness`, `db-tests`, `supabase`, `gitleaks`, `platform-check` (and the dispatch-only `fault-proofs`) |
 
-All five repositories (these four and this one) are public since 2026-11-17 (the private repositories ran out of free Actions minutes); the pre-publication audit is [`coldmail-platform/Docs/public-release-audit.md`](coldmail-platform/Docs/public-release-audit.md). Source is visible for transparency only: see [`NOTICE`](./NOTICE).
+All five repositories (these four and this one) are public since 2026-11-17 (the private repositories ran out of free Actions minutes); the pre-publication audit is [`coldmail-platform/Docs/public-release-audit.md`](coldmail-platform/Docs/public-release-audit.md). The source is visible for transparency only and all rights are reserved: see [`LICENSE`](./LICENSE) and [`NOTICE`](./NOTICE).
 
 ## How they fit
 
