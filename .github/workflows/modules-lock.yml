@@ -1,0 +1,40 @@
+# The parent pins the four repositories as submodules (gitlinks). The platform's `tools/modules.lock` names the three module commits the platform's harness builds. This workflow
+# fails when the two disagree: a commit in this repository means "these four commits, together, are the set that was verified", and the harness verified the lock, not the gitlinks.
+# It could not exist while the repositories were private (the parent's token cannot read its siblings); all five have been public since 2026-11-17, so the submodules check out
+# anonymously over https. It reads no secret.
+#
+# NOT CHECKED (the script says so on every run): that either side is the commit you MEANT to pin, or that it is green: only that the two agree. Whether the pinned platform commit is
+# verified is the platform's own gate (`check-verified-heads`, which reads the run records through the GitHub API).
+name: modules-lock
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: true
+
+      - name: The platform's tools/modules.lock equals the gitlinks this repository pins
+        run: bash coldmail-platform/tools/check-modules-lock.sh "$GITHUB_WORKSPACE"
+
+      - name: Control, the check goes red when the lock and a gitlink disagree (a scratch lock)
+        run: |
+          set -u +e   # the check is EXPECTED to exit non-zero here; the runner starts bash with -e
+          sed 's/^coldmail-send-byo .*/coldmail-send-byo 0000000000000000000000000000000000000000/' coldmail-platform/tools/modules.lock > "$RUNNER_TEMP/bad.lock"
+          out="$(bash coldmail-platform/tools/check-modules-lock.sh "$GITHUB_WORKSPACE" "$RUNNER_TEMP/bad.lock" 2>&1)"; rc=$?
+          printf '%s\n' "$out" | sed 's/^/    | /'
+          [ "$rc" -ne 0 ] && printf '%s\n' "$out" | grep -q "FAIL: coldmail-send-byo lock 0000000000000000000000000000000000000000 !=" || { echo "CONTROL FAILED: the check did not go red naming coldmail-send-byo (rc=$rc)"; exit 1; }
+          echo "control holds: a lock that names another commit is red, naming the module"
